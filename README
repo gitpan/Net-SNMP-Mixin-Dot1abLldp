@@ -1,0 +1,97 @@
+NAME
+    Net::SNMP::Mixin::Dot1abLLDP - mixin class for LLDP infos
+
+VERSION
+    Version 0.01_01
+
+SYNOPSIS
+    A mixin class for Net::SNMP for LLDP based info.
+
+      use Net::SNMP;
+      use Net::SNMP::Mixin qw/mixer init_mixins/;
+
+      #...
+
+      my $session = Net::SNMP->session( -hostname => 'foo.bar.com' );
+
+      $session->mixer('Net::SNMP::Mixin::Dot1abLLDP');
+      $session->init_mixins;
+      snmp_dispatcher() if $session->nonblocking;
+
+      die $session->error if $session->error;
+
+      printf "Local ChassisID: %s\n",
+        $session->get_lldp_local_system_data->{lldpLocChassisId};
+
+      my $lldp_rem_tbl = $session->get_lldp_rem_table;
+
+      foreach my $lport ( sort { $a <=> $b } keys %{$lldp_rem_tbl} ) {
+        printf "%3d %15.15s %25.25s %25.25s\n", $lport,
+          $lldp_rem_tbl->{$lport}{lldpRemSysName},
+          $lldp_rem_tbl->{$lport}{lldpRemPortId},
+          $lldp_rem_tbl->{$lport}{lldpRemChassisId};
+      }
+
+MIXIN METHODS
+  OBJ->get_lldp_local_system_data()
+    Returns the LLDP lldpLocalSystemData group as a hash reference:
+
+      {
+        lldpLocChassisIdSubtype => Integer,
+        lldpLocChassisId        => OCTET_STRING,
+        lldpLocSysName          => OCTET_STRING,
+        lldpLocSysDesc          => OCTET_STRING,
+        lldpLocSysCapSupported  => BITS,
+        lldpLocSysCapEnabled    => BITS,
+      }
+
+  OBJ->get_lldp_rem_table()
+    Returns the LLDP lldp_rem_table as a hash reference. The keys are the
+    LLDP local port numbers on which the remote system information is
+    received:
+
+      {
+        INTEGER => {    # lldpRemLocalPortNum
+
+          lldpRemChassisIdSubtype => INTEGER,
+          lldpRemChassisId        => OCTET_STRING,
+          lldpRemPortIdSubtype    => INTEGER,
+          lldpRemPortId           => OCTET_STRING,
+          lldpRemPortDesc         => OCTET_STRING,
+          lldpRemSysName          => OCTET_STRING,
+          lldpRemSysDesc          => OCTET_STRING,
+          lldpRemSysCapSupported  => BITS,
+          lldpRemSysCapEnabled    => BITS,
+        }
+      }
+
+INITIALIZATION
+  OBJ->_init($reload)
+    Fetch the LLDP related snmp values from the host. Don't call this method
+    direct!
+
+PRIVATE METHODS
+    Only for developers or maintainers.
+
+  _fetch_lldp_local_system_data($session)
+    Fetch the local system data from the lldpMIB once during object
+    initialization.
+
+  _lldp_local_system_data_cb($session)
+    The callback for _fetch_lldp_local_system_data.
+
+  _fetch_lldp_rem_tbl($session)
+    Fetch the lldpRemTable once during object initialization.
+
+  _lldp_rem_tbl_cb($session)
+    The callback for _fetch_lldp_rem_tbl_cb().
+
+AUTHOR
+    Karl Gaissmaier, "<karl.gaissmaier at uni-ulm.de>"
+
+COPYRIGHT & LICENSE
+    Copyright 2008 Karl Gaissmaier, all rights reserved.
+
+    This program is free software; you can redistribute it and/or modify it
+    under the same terms as Perl itself.
+
