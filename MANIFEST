@@ -1,7 +1,9 @@
+Artistic
 Build.PL
 Changes
 examples/lldp.pl
 lib/Net/SNMP/Mixin/Dot1abLLDP.pm
+LICENSE
 Makefile.PL
 MANIFEST			This list of files
 META.yml

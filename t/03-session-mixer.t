@@ -12,8 +12,8 @@ plan skip_all =>
   "Net::SNMP::Mixin required for testing Net::SNMP::Mixin module"
   if $@;
 
-#plan tests => 6;
-plan 'no_plan';
+plan tests => 13;
+#plan 'no_plan';
 
 my ( $session, $error ) =
   Net::SNMP->session( hostname => '0.0.0.0', retries => 0, timeout => 1, );

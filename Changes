@@ -1,5 +1,10 @@
 Revision history for Net-SNMP-Mixin-Dot1abLLDP
 
+0.02	Mon Apr 14 00:05:47 CEST 2008
+	more pod
+	fixed test plan
+	kwalitee and LICENSE
+
 0.01_01 Sat Apr 12 23:27:54 CEST 2008
         First developer release.
 

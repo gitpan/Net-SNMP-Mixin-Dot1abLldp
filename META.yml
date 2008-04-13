@@ -1,9 +1,9 @@
 ---
 name: Net-SNMP-Mixin-Dot1abLLDP
-version: 0.01_01
+version: 0.02
 author:
   - 'Karl Gaissmaier <karl.gaissmaier (at) uni-ulm.de>'
-abstract: mixin class for LLDP infos
+abstract: mixin class for the Link Layer Dicsovery Protocol
 license: perl
 resources:
   license: http://dev.perl.org/licenses/
@@ -17,7 +17,7 @@ build_requires:
 provides:
   Net::SNMP::Mixin::Dot1abLLDP:
     file: lib/Net/SNMP/Mixin/Dot1abLLDP.pm
-    version: 0.01_01
+    version: 0.02
 generated_by: Module::Build version 0.2808
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.2.html

@@ -63,19 +63,19 @@ use constant {
 
 =head1 NAME
 
-Net::SNMP::Mixin::Dot1abLLDP - mixin class for LLDP infos
+Net::SNMP::Mixin::Dot1abLLDP - mixin class for the Link Layer Dicsovery Protocol
 
 =head1 VERSION
 
-Version 0.01_01
+Version 0.02
 
 =cut
 
-our $VERSION = '0.01_01';
+our $VERSION = '0.02';
 
 =head1 SYNOPSIS
 
-A mixin class for Net::SNMP for LLDP based info.
+A mixin class for Net::SNMP for LLDP (Link Layer Discovery Protocol) based info.
 
   use Net::SNMP;
   use Net::SNMP::Mixin qw/mixer init_mixins/;
@@ -103,6 +103,14 @@ A mixin class for Net::SNMP for LLDP based info.
   }
 
 =cut
+
+=head1 DESCRIPTION
+
+With this mixin it's simple to explore the Layer-2 topologie of the network.
+
+The LLDP (Link Layer Discovery Protocol) is an IEEE (Draft?) standard for vendor-independent Layer-2 discovery, similar to the proprietary CDP (Cisco Discovery Protocol) from Cisco. It's defined in the IEEE 802.1AB documents, therefore the name of this module.
+
+This mixin reads data from the B<< lldpLocalSystemData >> and the B<< lldpRemTable >> out of the LLDP-MIB. At least these values are in the mandatory set of the LLDP-MIB.
 
 =head1 MIXIN METHODS
 
@@ -170,6 +178,19 @@ Returns the LLDP lldp_rem_table as a hash reference. The keys are the LLDP local
     }
   }
 
+The LLDP portnumber isn't necessarily the ifIndex of the switch. See the TEXTUAL-CONVENTION from the LLDP-MIB:
+
+  "A port number has no mandatory relationship to an
+  InterfaceIndex object (of the interfaces MIB, IETF RFC 2863).
+  If the LLDP agent is a IEEE 802.1D, IEEE 802.1Q bridge, the
+  LldpPortNumber will have the same value as the dot1dBasePort
+  object (defined in IETF RFC 1493) associated corresponding
+  bridge port.  If the system hosting LLDP agent is not an
+  IEEE 802.1D or an IEEE 802.1Q bridge, the LldpPortNumber
+  will have the same value as the corresponding interface's
+  InterfaceIndex object."
+
+See also the L<< Net::SNMP::Mixin::Dot1dBase >> for a mixin to get the mapping between the ifIndexes and the dot1dBasePorts if needed.
 
 =cut
 
@@ -443,9 +464,26 @@ unless ( caller() ) {
   print "$prefix compiles and initializes successful.\n";
 }
 
+=head1 SEE ALSO
+
+L<< Net::SNMP::Mixin::Dot1dBase >>
+
+=head1 REQUIREMENTS
+
+L<< Net::SNMP >>, L<< Net::SNMP::Mixin >>
+
+=head1 BUGS, PATCHES & FIXES
+
+There are no known bugs at the time of this release. However, if you spot a bug or are experiencing difficulties that are not explained within the POD documentation, please submit a bug to the RT system (see link below). However, it would help greatly if you are able to pinpoint problems or even supply a patch. 
+
+Fixes are dependant upon their severity and my availablity. Should a fix not be forthcoming, please feel free to (politely) remind me by sending an email to gaissmai@cpan.org .
+
+  RT: http://rt.cpan.org/Public/Dist/Display.html?Name=Net-SNMP-Mixin-Dot1abLLDP
+
+
 =head1 AUTHOR
 
-Karl Gaissmaier, C<< <karl.gaissmaier at uni-ulm.de> >>
+Karl Gaissmaier <karl.gaissmaier at uni-ulm.de>
 
 =head1 COPYRIGHT & LICENSE
 
