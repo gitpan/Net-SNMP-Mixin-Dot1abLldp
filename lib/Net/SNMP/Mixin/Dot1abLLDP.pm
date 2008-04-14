@@ -63,15 +63,15 @@ use constant {
 
 =head1 NAME
 
-Net::SNMP::Mixin::Dot1abLLDP - mixin class for the Link Layer Dicsovery Protocol
+Net::SNMP::Mixin::Dot1abLLDP - mixin class for the Link Layer Discovery Protocol
 
 =head1 VERSION
 
-Version 0.02
+Version 0.03
 
 =cut
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 =head1 SYNOPSIS
 

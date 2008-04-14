@@ -1,9 +1,9 @@
 NAME
-    Net::SNMP::Mixin::Dot1abLLDP - mixin class for the Link Layer Dicsovery
+    Net::SNMP::Mixin::Dot1abLLDP - mixin class for the Link Layer Discovery
     Protocol
 
 VERSION
-    Version 0.02
+    Version 0.03
 
 SYNOPSIS
     A mixin class for Net::SNMP for LLDP (Link Layer Discovery Protocol)

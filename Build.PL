@@ -14,7 +14,10 @@ my $builder = Module::Build->new(
     'Net::SNMP::Mixin' => '0',
     'Sub::Exporter'    => '0.978',
   },
-  build_requires     => { 'Module::Build' => '0', },
+  build_requires => {
+    'Module::Build' => '0',
+    'Test::More'    => '0',
+  },
   create_makefile_pl => 'passthrough',
   add_to_cleanup => [qw/Net-SNMP-Mixin-* Makefile* META.yml README/],
 );

@@ -1,5 +1,9 @@
 Revision history for Net-SNMP-Mixin-Dot1abLLDP
 
+0.03	Mon Apr 14 10:51:07 CEST 2008
+	fixed typo in ABSTRACT
+	Test::More in build_require
+
 0.02	Mon Apr 14 00:05:47 CEST 2008
 	more pod
 	fixed test plan
