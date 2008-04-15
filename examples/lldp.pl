@@ -70,7 +70,7 @@ foreach my $agent ( sort @agents ) {
     next;
   }
 
-  $session->mixer(qw/Net::SNMP::Mixin::Dot1abLLDP/);
+  $session->mixer(qw/Net::SNMP::Mixin::Dot1abLldp/);
   $session->init_mixins;
   push @sessions, $session;
 

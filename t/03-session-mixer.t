@@ -21,8 +21,8 @@ my ( $session, $error ) =
 ok( !$error, 'snmp session created without error' );
 isa_ok( $session, 'Net::SNMP' );
 
-eval { $session->mixer("Net::SNMP::Mixin::Dot1abLLDP") };
-is( $@, '', 'Net::SNMP::Mixin::Dot1abLLDP mixed in successful' );
+eval { $session->mixer("Net::SNMP::Mixin::Dot1abLldp") };
+is( $@, '', 'Net::SNMP::Mixin::Dot1abLldp mixed in successful' );
 ok(
   $session->can('get_lldp_local_system_data'),
   '$session can get_lldp_local_system_data'
@@ -30,7 +30,7 @@ ok(
 ok( $session->can('get_lldp_rem_table'), '$session can get_lldp_rem_table' );
 
 # try to mixin twice
-eval { $session->mixer("Net::SNMP::Mixin::Dot1abLLDP") };
+eval { $session->mixer("Net::SNMP::Mixin::Dot1abLldp") };
 like( $@, qr/already mixed into/, 'mixed in twice is an error' );
 
 eval { $session->init_mixins() };
@@ -60,8 +60,8 @@ undef $session;
 ok( !$error, 'nonblocking snmp session created without error' );
 isa_ok( $session, 'Net::SNMP' );
 
-eval { $session->mixer("Net::SNMP::Mixin::Dot1abLLDP") };
-is( $@, '', 'Net::SNMP::Mixin::Dot1abLLDP mixed in successful' );
+eval { $session->mixer("Net::SNMP::Mixin::Dot1abLldp") };
+is( $@, '', 'Net::SNMP::Mixin::Dot1abLldp mixed in successful' );
 
 eval { $session->init_mixins() };
 Net::SNMP::snmp_dispatcher();

@@ -45,4 +45,4 @@ sub module_boilerplate_ok {
     );
 }
 
-module_boilerplate_ok('lib/Net/SNMP/Mixin/Dot1abLLDP.pm');
+module_boilerplate_ok('lib/Net/SNMP/Mixin/Dot1abLldp.pm');

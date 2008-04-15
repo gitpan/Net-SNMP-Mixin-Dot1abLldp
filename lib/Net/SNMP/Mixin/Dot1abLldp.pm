@@ -1,4 +1,4 @@
-package Net::SNMP::Mixin::Dot1abLLDP;
+package Net::SNMP::Mixin::Dot1abLldp;
 
 use strict;
 use warnings;
@@ -63,15 +63,15 @@ use constant {
 
 =head1 NAME
 
-Net::SNMP::Mixin::Dot1abLLDP - mixin class for the Link Layer Discovery Protocol
+Net::SNMP::Mixin::Dot1abLldp - mixin class for the Link Layer Discovery Protocol
 
 =head1 VERSION
 
-Version 0.03
+Version 0.04_01
 
 =cut
 
-our $VERSION = '0.03';
+our $VERSION = '0.04_01';
 
 =head1 SYNOPSIS
 
@@ -84,7 +84,7 @@ A mixin class for Net::SNMP for LLDP (Link Layer Discovery Protocol) based info.
 
   my $session = Net::SNMP->session( -hostname => 'foo.bar.com' );
 
-  $session->mixer('Net::SNMP::Mixin::Dot1abLLDP');
+  $session->mixer('Net::SNMP::Mixin::Dot1abLldp');
   $session->init_mixins;
   snmp_dispatcher() if $session->nonblocking;
 
@@ -478,7 +478,7 @@ There are no known bugs at the time of this release. However, if you spot a bug 
 
 Fixes are dependant upon their severity and my availablity. Should a fix not be forthcoming, please feel free to (politely) remind me by sending an email to gaissmai@cpan.org .
 
-  RT: http://rt.cpan.org/Public/Dist/Display.html?Name=Net-SNMP-Mixin-Dot1abLLDP
+  RT: http://rt.cpan.org/Public/Dist/Display.html?Name=Net-SNMP-Mixin-Dot1abLldp
 
 
 =head1 AUTHOR

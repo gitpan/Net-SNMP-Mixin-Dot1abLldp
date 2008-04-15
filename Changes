@@ -1,5 +1,8 @@
 Revision history for Net-SNMP-Mixin-Dot1abLLDP
 
+0.04_01	Di 15. Apr 11:08:01 CEST 2008
+	sorry, renamed from ...LLDP to ...Lldp
+
 0.03	Mon Apr 14 10:51:07 CEST 2008
 	fixed typo in ABSTRACT
 	Test::More in build_require

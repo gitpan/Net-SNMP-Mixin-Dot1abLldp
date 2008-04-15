@@ -3,11 +3,11 @@ use warnings;
 use Module::Build;
 
 my $builder = Module::Build->new(
-  module_name       => 'Net::SNMP::Mixin::Dot1abLLDP',
+  module_name       => 'Net::SNMP::Mixin::Dot1abLldp',
   create_readme     => 1,
   license           => 'perl',
   dist_author       => 'Karl Gaissmaier <karl.gaissmaier (at) uni-ulm.de>',
-  dist_version_from => 'lib/Net/SNMP/Mixin/Dot1abLLDP.pm',
+  dist_version_from => 'lib/Net/SNMP/Mixin/Dot1abLldp.pm',
   requires          => {
     'perl'             => '5.6.0',
     'Net::SNMP'        => '0',

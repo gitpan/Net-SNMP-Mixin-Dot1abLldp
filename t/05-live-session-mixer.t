@@ -34,7 +34,7 @@ SKIP: {
   ok( !$error, 'got snmp session for live tests' );
   isa_ok( $session, 'Net::SNMP' );
 
-  isa_ok( $session->mixer('Net::SNMP::Mixin::Dot1abLLDP'), 'Net::SNMP' );
+  isa_ok( $session->mixer('Net::SNMP::Mixin::Dot1abLldp'), 'Net::SNMP' );
   ok(
     $session->can('get_lldp_local_system_data'),
     'can $session->get_lldp_local_system_data'
@@ -84,7 +84,7 @@ SKIP: {
   ok( !$error, 'got snmp session for live tests' );
   isa_ok( $session, 'Net::SNMP' );
 
-  isa_ok( $session->mixer('Net::SNMP::Mixin::Dot1abLLDP'), 'Net::SNMP' );
+  isa_ok( $session->mixer('Net::SNMP::Mixin::Dot1abLldp'), 'Net::SNMP' );
   ok(
     $session->can('get_lldp_local_system_data'),
     'can $session->get_lldp_local_system_data'
@@ -120,7 +120,7 @@ SKIP: {
   ok( !$error, 'got snmp session for live tests' );
   isa_ok( $session, 'Net::SNMP' );
 
-  isa_ok( $session->mixer('Net::SNMP::Mixin::Dot1abLLDP'), 'Net::SNMP' );
+  isa_ok( $session->mixer('Net::SNMP::Mixin::Dot1abLldp'), 'Net::SNMP' );
   ok(
     $session->can('get_lldp_local_system_data'),
     'can $session->get_lldp_local_system_data'
@@ -156,7 +156,7 @@ SKIP: {
   ok( !$error, 'got snmp session for live tests' );
   isa_ok( $session, 'Net::SNMP' );
 
-  isa_ok( $session->mixer('Net::SNMP::Mixin::Dot1abLLDP'), 'Net::SNMP' );
+  isa_ok( $session->mixer('Net::SNMP::Mixin::Dot1abLldp'), 'Net::SNMP' );
   ok(
     $session->can('get_lldp_local_system_data'),
     'can $session->get_lldp_local_system_data'

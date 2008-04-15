@@ -3,6 +3,6 @@
 use Test::More tests => 1;
 
 BEGIN {
-	use_ok( 'Net::SNMP::Mixin::Dot1abLLDP' );
+	use_ok( 'Net::SNMP::Mixin::Dot1abLldp' );
 }
 

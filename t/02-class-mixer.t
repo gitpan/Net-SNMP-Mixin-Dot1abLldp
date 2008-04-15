@@ -15,7 +15,7 @@ plan skip_all =>
 
 plan tests => 11;
 
-is( Net::SNMP->mixer('Net::SNMP::Mixin::Dot1abLLDP'),
+is( Net::SNMP->mixer('Net::SNMP::Mixin::Dot1abLldp'),
   'Net::SNMP', 'mixer returns the class name' );
 ok(
   Net::SNMP->can('get_lldp_local_system_data'),
@@ -26,7 +26,7 @@ ok(
   'get_lldp_rem_table() is now a class method'
 );
 
-eval {Net::SNMP->mixer('Net::SNMP::Mixin::Dot1abLLDP')};
+eval {Net::SNMP->mixer('Net::SNMP::Mixin::Dot1abLldp')};
 like( $@, qr/already mixed into/, 'mixed in twice is an error' );
 
 my ( $session, $error ) = Net::SNMP->session( hostname => '0.0.0.0', );
@@ -35,7 +35,7 @@ ok( !$error, 'snmp session created without error' );
 isa_ok( $session, 'Net::SNMP' );
 
 # already mixed in as a class mixin
-eval {$session->mixer("Net::SNMP::Mixin::Dot1abLLDP")};
+eval {$session->mixer("Net::SNMP::Mixin::Dot1abLldp")};
 like( $@, qr/already mixed into/, 'mixed in twice is an error' );
 
 ok( $session->can('get_lldp_local_system_data'), '$session can get_lldp_local_system_data' );

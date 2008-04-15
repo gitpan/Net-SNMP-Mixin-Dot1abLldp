@@ -18,7 +18,7 @@ plan tests => 10;
 
 #plan 'no_plan';
 
-is( Net::SNMP->mixer('Net::SNMP::Mixin::Dot1abLLDP'),
+is( Net::SNMP->mixer('Net::SNMP::Mixin::Dot1abLldp'),
   'Net::SNMP', 'mixer returns the class name' );
 
 my $builder        = Module::Build->current;
