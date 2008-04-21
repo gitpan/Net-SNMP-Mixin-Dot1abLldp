@@ -29,7 +29,7 @@ ok(
 eval {Net::SNMP->mixer('Net::SNMP::Mixin::Dot1abLldp')};
 like( $@, qr/already mixed into/, 'mixed in twice is an error' );
 
-my ( $session, $error ) = Net::SNMP->session( hostname => '0.0.0.0', );
+my ( $session, $error ) = Net::SNMP->session( hostname => '127.0.0.1', );
 
 ok( !$error, 'snmp session created without error' );
 isa_ok( $session, 'Net::SNMP' );

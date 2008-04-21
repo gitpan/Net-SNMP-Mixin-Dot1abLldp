@@ -1,4 +1,7 @@
-Revision history for Net-SNMP-Mixin-Dot1abLLDP
+Revision history for Net-SNMP-Mixin-Dot1abLldp
+
+0.05	Mo 21. Apr 17:45:38 CEST 2008
+	tests with 127.0.0.1 instead of 0.0.0.0
 
 0.04_01	Di 15. Apr 11:08:01 CEST 2008
 	sorry, renamed from ...LLDP to ...Lldp

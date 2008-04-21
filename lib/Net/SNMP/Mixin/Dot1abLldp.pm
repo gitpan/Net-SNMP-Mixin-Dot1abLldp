@@ -67,11 +67,11 @@ Net::SNMP::Mixin::Dot1abLldp - mixin class for the Link Layer Discovery Protocol
 
 =head1 VERSION
 
-Version 0.04_01
+Version 0.05
 
 =cut
 
-our $VERSION = '0.04_01';
+our $VERSION = '0.05';
 
 =head1 SYNOPSIS
 
