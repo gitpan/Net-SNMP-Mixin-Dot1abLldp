@@ -78,7 +78,7 @@ foreach my $agent ( sort @agents ) {
 snmp_dispatcher() if $Net::SNMP::NONBLOCKING;
 
 # remove sessions with error from the sessions list
-@sessions = grep { not $_->error } @sessions;
+@sessions = grep { warn $_->error if $_->error; not $_->error } @sessions;
 
 print_lldp();
 exit 0;

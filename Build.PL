@@ -23,6 +23,14 @@ my $builder = Module::Build->new(
 );
 
 # -----------------------------------------------------------------------
+# stop CPANTesters sending false FAIL reports
+
+if ( $builder->prereq_failures && exists $builder->prereq_failures->{requires} ) {
+    warn "Please install the required modules first.\n";
+    exit 0;
+}
+
+# -----------------------------------------------------------------------
 # shall we perform live tests?
 
 print "==> For running live test you need a network connection <==\n";

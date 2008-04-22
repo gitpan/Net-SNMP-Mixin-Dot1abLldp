@@ -3,7 +3,7 @@ NAME
     Protocol
 
 VERSION
-    Version 0.05
+    Version 0.06
 
 SYNOPSIS
     A mixin class for Net::SNMP for LLDP (Link Layer Discovery Protocol)

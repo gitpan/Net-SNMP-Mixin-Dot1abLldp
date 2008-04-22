@@ -1,5 +1,9 @@
 Revision history for Net-SNMP-Mixin-Dot1abLldp
 
+0.06	Mi 23. Apr 00:45:23 CEST 2008
+	Stop CPANTesters sending wrong FAIL reports
+	minor change in example script
+
 0.05	Mo 21. Apr 17:45:38 CEST 2008
 	tests with 127.0.0.1 instead of 0.0.0.0
 
