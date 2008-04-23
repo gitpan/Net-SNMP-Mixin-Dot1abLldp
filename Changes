@@ -1,5 +1,8 @@
 Revision history for Net-SNMP-Mixin-Dot1abLldp
 
+0.07	Mi 23. Apr 09:20:30 CEST 2008
+	grml, again Build.PL tweaks
+
 0.06	Mi 23. Apr 00:45:23 CEST 2008
 	Stop CPANTesters sending wrong FAIL reports
 	minor change in example script
