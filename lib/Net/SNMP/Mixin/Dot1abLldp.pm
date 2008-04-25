@@ -67,11 +67,11 @@ Net::SNMP::Mixin::Dot1abLldp - mixin class for the Link Layer Discovery Protocol
 
 =head1 VERSION
 
-Version 0.07
+Version 0.08
 
 =cut
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 =head1 SYNOPSIS
 
@@ -134,29 +134,8 @@ sub get_lldp_local_system_data {
   Carp::croak "'$prefix' not initialized,"
     unless $session->{$prefix}{__initialized};
 
-  my $result = {};
-
-  $result->{lldpLocChassisIdSubtype} =
-    $session->{$prefix}{lldpLocChassisIdSubtype};
-
-  $result->{lldpLocChassisId} = $session->{$prefix}{lldpLocChassisId};
-
-  # if the chassisIdSubtype has the enumeration 'macAddress(4)'
-  # we normalize the MacAddress
-  $result->{lldpLocChassisId} = normalize_mac( $result->{lldpLocChassisId} )
-    if $result->{lldpLocChassisIdSubtype} == 4;
-
-  $result->{lldpLocSysName} = $session->{$prefix}{lldpLocSysName};
-
-  $result->{lldpLocSysDesc} = $session->{$prefix}{lldpLocSysDesc};
-
-  $result->{lldpLocSysCapSupported} =
-    $session->{$prefix}{lldpLocSysCapSupported};
-
-  $result->{lldpLocSysCapEnabled} =
-    $session->{$prefix}{lldpLocSysCapEnabled};
-
-  return $result;
+  # just a shallow copy for shallow values
+  return { %{ $session->{$prefix}{locSysData} } };
 }
 
 =head2 B<< OBJ->get_lldp_rem_table() >>
@@ -201,51 +180,35 @@ sub get_lldp_rem_table {
     unless $session->{$prefix}{__initialized};
 
   # stash for return values
-  my $lldpRemTable = {};
+  my $result = {};
 
-  # lldpRemTable index
-  my @lldpRemTableIndexes = keys %{ $session->{$prefix}{lldpRemPortId} };
+  # the MIB tables are stored in {column}{row}{value} order
+  # but we return {row}{column}{value}
+  #
+  # grab all rows from one random choosen column
+  my @rows = keys %{ $session->{$prefix}{lldpRemTbl}{lldpRemPortId} };
 
-  foreach my $idx ( @lldpRemTableIndexes ) {
-    my $row = {};
+  foreach my $row (@rows) {
 
-    $row->{lldpRemChassisIdSubtype} =
-      $session->{$prefix}{lldpRemChassisIdSubtype}{$idx};
+    # loop over all columns
+    foreach my $column ( keys %{ $session->{$prefix}{lldpRemTbl} } ) {
 
-    $row->{lldpRemChassisId} =
-      $session->{$prefix}{lldpRemChassisId}{$idx};
+      # rebuild in reverse order: result(row,column) = stash(column,row)
+      # side effect: make a shallow copy for shallow values
+
+      $result->{$row}{$column} =
+        $session->{$prefix}{lldpRemTbl}{$column}{$row};
+    }
 
     # if the chassisIdSubtype has the enumeration 'macAddress(4)'
     # we normalize the MacAddress
-    $row->{lldpRemChassisId} = normalize_mac( $row->{lldpRemChassisId} )
-      if $row->{lldpRemChassisIdSubtype} == 4;
+    $result->{$row}{lldpRemChassisId} =
+      normalize_mac( $result->{$row}{lldpRemChassisId} )
+      if $result->{$row}{lldpRemChassisIdSubtype} == 4;
 
-    $row->{lldpRemPortIdSubtype} =
-      $session->{$prefix}{lldpRemPortIdSubtype}{$idx};
-
-    $row->{lldpRemPortId} =
-      $session->{$prefix}{lldpRemPortId}{$idx};
-
-    $row->{lldpRemPortDesc} =
-      $session->{$prefix}{lldpRemPortDesc}{$idx};
-
-    $row->{lldpRemSysName} =
-      $session->{$prefix}{lldpRemSysName}{$idx};
-
-    $row->{lldpRemSysDesc} =
-      $session->{$prefix}{lldpRemSysDesc}{$idx};
-
-
-    $row->{lldpRemSysCapSupported} =
-      $session->{$prefix}{lldpRemSysCapSupported}{$idx};
-
-    $row->{lldpRemSysCapEnabled} =
-      $session->{$prefix}{lldpRemSysCapEnabled}{$idx};
-
-    $lldpRemTable->{$idx} = $row;
   }
 
-  return $lldpRemTable;
+  return $result;
 }
 
 =head1 INITIALIZATION
@@ -326,22 +289,22 @@ sub _lldp_local_system_data_cb {
 
   return unless defined $vbl;
 
-  $session->{$prefix}{lldpLocChassisIdSubtype} =
+  $session->{$prefix}{locSysData}{lldpLocChassisIdSubtype} =
     $vbl->{ LLDP_LOCAL_CASSIS_ID_SUBTYPE() };
 
-  $session->{$prefix}{lldpLocChassisId} =
+  $session->{$prefix}{locSysData}{lldpLocChassisId} =
     $vbl->{ LLDP_LOCAL_CASSIS_ID() };
 
-  $session->{$prefix}{lldpLocSysName} =
+  $session->{$prefix}{locSysData}{lldpLocSysName} =
     $vbl->{ LLDP_LOCAL_SYS_NAME() };
 
-  $session->{$prefix}{lldpLocSysDesc} =
+  $session->{$prefix}{locSysData}{lldpLocSysDesc} =
     $vbl->{ LLDP_LOCAL_SYS_DESC() };
 
-  $session->{$prefix}{lldpLocSysCapSupported} =
+  $session->{$prefix}{locSysData}{lldpLocSysCapSupported} =
     $vbl->{ LLDP_LOCAL_SYS_CAPA_SUP() };
 
-  $session->{$prefix}{lldpLocSysCapEnabled} =
+  $session->{$prefix}{locSysData}{lldpLocSysCapEnabled} =
     $vbl->{ LLDP_LOCAL_SYS_CAPA_ENA() };
 
   $session->{$prefix}{__initialized}++;
@@ -430,31 +393,31 @@ sub _lldp_rem_tbl_cb {
   # result hashes: lldpRemLocalPortNum => values
   #
 
-  $session->{$prefix}{lldpRemChassisIdSubtype} =
+  $session->{$prefix}{lldpRemTbl}{lldpRemChassisIdSubtype} =
     idx2val( $vbl, LLDP_REM_CASSIS_ID_SUBTYPE, 1, 1, );
 
-  $session->{$prefix}{lldpRemChassisId} =
+  $session->{$prefix}{lldpRemTbl}{lldpRemChassisId} =
     idx2val( $vbl, LLDP_REM_CASSIS_ID, 1, 1, );
 
-  $session->{$prefix}{lldpRemPortIdSubtype} =
+  $session->{$prefix}{lldpRemTbl}{lldpRemPortIdSubtype} =
     idx2val( $vbl, LLDP_REM_PORT_ID_SUBTYPE, 1, 1, );
 
-  $session->{$prefix}{lldpRemPortId} =
+  $session->{$prefix}{lldpRemTbl}{lldpRemPortId} =
     idx2val( $vbl, LLDP_REM_PORT_ID, 1, 1, );
 
-  $session->{$prefix}{lldpRemPortDesc} =
+  $session->{$prefix}{lldpRemTbl}{lldpRemPortDesc} =
     idx2val( $vbl, LLDP_REM_PORT_DESC, 1, 1, );
 
-  $session->{$prefix}{lldpRemSysName} =
+  $session->{$prefix}{lldpRemTbl}{lldpRemSysName} =
     idx2val( $vbl, LLDP_REM_SYS_NAME, 1, 1, );
 
-  $session->{$prefix}{lldpRemSysDesc} =
+  $session->{$prefix}{lldpRemTbl}{lldpRemSysDesc} =
     idx2val( $vbl, LLDP_REM_SYS_DESC, 1, 1, );
 
-  $session->{$prefix}{lldpRemSysCapSupported} =
+  $session->{$prefix}{lldpRemTbl}{lldpRemSysCapSupported} =
     idx2val( $vbl, LLDP_REM_SYS_CAPA_SUP, 1, 1, );
 
-  $session->{$prefix}{lldpRemSysCapEnabled} =
+  $session->{$prefix}{lldpRemTbl}{lldpRemSysCapEnabled} =
     idx2val( $vbl, LLDP_REM_SYS_CAPA_ENA, 1, 1, );
 
   $session->{$prefix}{__initialized}++;

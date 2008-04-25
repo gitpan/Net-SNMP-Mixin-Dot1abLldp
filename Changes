@@ -1,5 +1,9 @@
 Revision history for Net-SNMP-Mixin-Dot1abLldp
 
+0.08	Fr 25. Apr 19:32:37 CEST 2008
+	no interface change
+	internal optimization for return value handling
+
 0.07	Mi 23. Apr 09:20:30 CEST 2008
 	grml, again Build.PL tweaks
 
