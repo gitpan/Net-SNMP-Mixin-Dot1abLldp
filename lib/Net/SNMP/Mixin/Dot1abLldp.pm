@@ -67,11 +67,11 @@ Net::SNMP::Mixin::Dot1abLldp - mixin class for the Link Layer Discovery Protocol
 
 =head1 VERSION
 
-Version 0.08
+Version 0.09
 
 =cut
 
-our $VERSION = '0.08';
+our $VERSION = '0.09';
 
 =head1 SYNOPSIS
 
@@ -135,7 +135,14 @@ sub get_lldp_local_system_data {
     unless $session->{$prefix}{__initialized};
 
   # just a shallow copy for shallow values
-  return { %{ $session->{$prefix}{locSysData} } };
+  my $result = { %{ $session->{$prefix}{locSysData} } };
+
+  # if the chassisIdSubtype has the enumeration 'macAddress(4)'
+  # we normalize the MacAddress
+  $result->{lldpLocChassisId} = normalize_mac( $result->{lldpLocChassisId} )
+    if $result->{lldpLocChassisIdSubtype} == 4;
+
+  return $result;
 }
 
 =head2 B<< OBJ->get_lldp_rem_table() >>

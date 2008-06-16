@@ -1,5 +1,8 @@
 Revision history for Net-SNMP-Mixin-Dot1abLldp
 
+0.09	Mo 16. Jun 14:53:31 CEST 2008
+	normalize lldpLocChassisId if lldpLocChassisIdSubtype is macAddress
+
 0.08	Fr 25. Apr 19:32:37 CEST 2008
 	no interface change
 	internal optimization for return value handling
