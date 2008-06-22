@@ -32,7 +32,7 @@ A script to get the LLDP information from switches supporting the MIBs.
 
 use blib;
 use Net::SNMP qw(:debug :snmp);
-use Net::SNMP::Mixin qw/mixer init_mixins/;
+use Net::SNMP::Mixin;
 
 use Getopt::Std;
 
@@ -62,7 +62,7 @@ foreach my $agent ( sort @agents ) {
     -nonblocking => $nonblocking,
     -timeout     => $timeout,
     -retries     => $retries,
-    -debug       => $debug ? DEBUG_ALL: 0,
+    -debug       => $debug ? DEBUG_ALL : 0,
   );
 
   if ($error) {
@@ -70,20 +70,58 @@ foreach my $agent ( sort @agents ) {
     next;
   }
 
-  $session->mixer(qw/Net::SNMP::Mixin::Dot1abLldp/);
+  $session->mixer( qw/ Net::SNMP::Mixin::Dot1abLldp /);
+
   $session->init_mixins;
   push @sessions, $session;
 
 }
-snmp_dispatcher() if $Net::SNMP::NONBLOCKING;
+snmp_dispatcher();
 
-# remove sessions with error from the sessions list
-@sessions = grep { warn $_->error if $_->error; not $_->error } @sessions;
+# warn on errors during initialization
+foreach my $session (@sessions) {
+  if ( $session->errors ) {
+    foreach my $error ( $session->errors ) {
+      warn $session->hostname . ": $error\n";
+    }
+  }
+}
 
-print_lldp();
+# remove sessions with errors from the sessions list
+@sessions = grep {not $_->errors(1)} @sessions;
+
+foreach my $session ( sort { $a->hostname cmp $b->hostname } @sessions ) {
+  print_lldp($session);
+}
+
 exit 0;
 
 ###################### end of main ######################
+
+sub print_lldp {
+  my $session = shift;
+
+  my $lldp_rem_tbl = $session->get_lldp_rem_table;
+
+  print "\n";
+  printf "Hostname: %-15.15s ChassisID: %-17.17s\n",
+    $session->hostname,
+    $session->get_lldp_local_system_data->{lldpLocChassisId};
+
+  print '-' x 71, "\n";
+  printf "%5s %13s %25s %25s\n", 'LPort', 'RemSysName', 'RemPortId',
+    'RemChassisId';
+  print '-' x 71, "\n";
+
+  foreach my $lport ( sort { $a <=> $b } keys %$lldp_rem_tbl ) {
+    my $lldpRemPortId    = $lldp_rem_tbl->{$lport}{lldpRemPortId};
+    my $lldpRemSysName   = $lldp_rem_tbl->{$lport}{lldpRemSysName};
+    my $lldpRemChassisId = $lldp_rem_tbl->{$lport}{lldpRemChassisId};
+    printf "%3d %15.15s %25.25s %25.25s\n", $lport, $lldpRemSysName,
+      $lldpRemPortId, $lldpRemChassisId;
+  }
+
+}
 
 sub usage {
   my @msg = @_;
@@ -99,31 +137,6 @@ sub usage {
 	-i		read agents from stdin
   	-B		nonblocking
 EOT
-}
-
-sub print_lldp {
-
-  foreach my $session ( sort { $a->hostname cmp $b->hostname } @sessions ) {
-    my $lldp_rem_tbl      = $session->get_lldp_rem_table;
-
-    print "\n";
-    printf "Hostname: %-15.15s ChassisID: %-17.17s\n",
-      $session->hostname, $session->get_lldp_local_system_data->{lldpLocChassisId};
-
-    print '-' x 71, "\n";
-    printf "%5s %13s %25s %25s\n", 'LPort', 'RemSysName', 'RemPortId',
-      'RemChassisId';
-    print '-' x 71, "\n";
-
-    foreach my $lport ( sort { $a <=> $b } keys %$lldp_rem_tbl ) {
-      my $lldpRemPortId    = $lldp_rem_tbl->{$lport}{lldpRemPortId};
-      my $lldpRemSysName   = $lldp_rem_tbl->{$lport}{lldpRemSysName};
-      my $lldpRemChassisId = $lldp_rem_tbl->{$lport}{lldpRemChassisId};
-      printf "%3d %15.15s %25.25s %25.25s\n", $lport, $lldpRemSysName,
-        $lldpRemPortId, $lldpRemChassisId;
-    }
-  }
-
 }
 
 =head1 AUTHOR

@@ -3,14 +3,14 @@ NAME
     Protocol
 
 VERSION
-    Version 0.09
+    Version 0.10
 
 SYNOPSIS
     A mixin class for Net::SNMP for LLDP (Link Layer Discovery Protocol)
     based info.
 
       use Net::SNMP;
-      use Net::SNMP::Mixin qw/mixer init_mixins/;
+      use Net::SNMP::Mixin;
 
       #...
 
@@ -18,9 +18,9 @@ SYNOPSIS
 
       $session->mixer('Net::SNMP::Mixin::Dot1abLldp');
       $session->init_mixins;
-      snmp_dispatcher() if $session->nonblocking;
+      snmp_dispatcher();
 
-      die $session->error if $session->error;
+      die $session->errors if $session->errors;
 
       printf "Local ChassisID: %s\n",
         $session->get_lldp_local_system_data->{lldpLocChassisId};

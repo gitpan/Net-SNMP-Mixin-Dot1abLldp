@@ -14,7 +14,7 @@ my $prefix = __PACKAGE__;
 # this module import config
 #
 use Carp ();
-use Net::SNMP::Mixin::Util qw/normalize_mac idx2val/;
+use Net::SNMP::Mixin::Util qw/normalize_mac idx2val push_error/;
 
 #
 # this module export config
@@ -67,18 +67,18 @@ Net::SNMP::Mixin::Dot1abLldp - mixin class for the Link Layer Discovery Protocol
 
 =head1 VERSION
 
-Version 0.09
+Version 0.10
 
 =cut
 
-our $VERSION = '0.09';
+our $VERSION = '0.10';
 
 =head1 SYNOPSIS
 
 A mixin class for Net::SNMP for LLDP (Link Layer Discovery Protocol) based info.
 
   use Net::SNMP;
-  use Net::SNMP::Mixin qw/mixer init_mixins/;
+  use Net::SNMP::Mixin;
 
   #...
 
@@ -86,9 +86,9 @@ A mixin class for Net::SNMP for LLDP (Link Layer Discovery Protocol) based info.
 
   $session->mixer('Net::SNMP::Mixin::Dot1abLldp');
   $session->init_mixins;
-  snmp_dispatcher() if $session->nonblocking;
+  snmp_dispatcher();
 
-  die $session->error if $session->error;
+  die $session->errors if $session->errors;
 
   printf "Local ChassisID: %s\n",
     $session->get_lldp_local_system_data->{lldpLocChassisId};
@@ -258,16 +258,16 @@ sub _fetch_lldp_local_system_data {
   my $session = shift;
   my $result;
 
-  $result = $session->get_request(
-    -varbindlist => [
+  # use get_entries instead of get_request since the
+  # result will be true in case of missing values
+  # the values are just noSuchObject
+  # with get_entries() we get error messages for free
+    
+  $result = $session->get_entries(
+    -columns    => [ LLDP_LOCAL_SYSTEM_DATA, ],
 
-      LLDP_LOCAL_CASSIS_ID_SUBTYPE,
-      LLDP_LOCAL_CASSIS_ID,
-      LLDP_LOCAL_SYS_NAME,
-      LLDP_LOCAL_SYS_DESC,
-      LLDP_LOCAL_SYS_CAPA_SUP,
-      LLDP_LOCAL_SYS_CAPA_ENA,
-    ],
+    -startindex => '1.0', # LLDP_LOCAL_CASSIS_ID_SUBTYPE
+    -endindex   => '6.0', # LLDP_LOCAL_SYS_CAPA_ENA
 
     # define callback if in nonblocking mode
     $session->nonblocking
@@ -276,11 +276,19 @@ sub _fetch_lldp_local_system_data {
 
   );
 
-  return unless defined $result;
+  unless (defined $result) {
+    # Net::SNMP looses sometimes error messages in nonblocking
+    # mode, so we save them in an extra buffer
+    my $err_msg = $session->error;
+    push_error($session, "$prefix: $err_msg") if $err_msg;
+    return;
+  }
+
+  # in nonblocking mode the callback will be called asynchronously
   return 1 if $session->nonblocking;
 
-  # call the callback function in blocking mode by hand
-  # in order to process the result
+  # ok we are in synchronous mode, call the result mangling function
+  # by hand
   _lldp_local_system_data_cb($session);
 }
 
@@ -294,7 +302,13 @@ sub _lldp_local_system_data_cb {
   my $session = shift;
   my $vbl     = $session->var_bind_list;
 
-  return unless defined $vbl;
+  unless (defined $vbl) {
+    # Net::SNMP looses sometimes error messages in nonblocking
+    # mode, so we save them in an extra buffer
+    my $err_msg = $session->error;
+    push_error($session, "$prefix: $err_msg") if $err_msg;
+    return;
+  }
 
   $session->{$prefix}{locSysData}{lldpLocChassisIdSubtype} =
     $vbl->{ LLDP_LOCAL_CASSIS_ID_SUBTYPE() };
@@ -341,11 +355,19 @@ sub _fetch_lldp_rem_tbl {
     $session->version ? ( -maxrepetitions => 0 ) : (),
   );
 
-  return unless defined $result;
+  unless (defined $result) {
+    # Net::SNMP looses sometimes error messages in nonblocking
+    # mode, so we save them in an extra buffer
+    my $err_msg = $session->error;
+    push_error($session, "$prefix: $err_msg") if $err_msg;
+    return;
+  }
+
+  # in nonblocking mode the callback will be called asynchronously
   return 1 if $session->nonblocking;
 
-  # call the callback function in blocking mode by hand
-  # in order to process the result
+  # ok we are in synchronous mode, call the result mangling function
+  # by hand
   _lldp_rem_tbl_cb($session);
 
 }
@@ -360,7 +382,13 @@ sub _lldp_rem_tbl_cb {
   my $session = shift;
   my $vbl     = $session->var_bind_list;
 
-  return unless defined $vbl;
+  unless (defined $vbl) {
+    # Net::SNMP looses sometimes error messages in nonblocking
+    # mode, so we save them in an extra buffer
+    my $err_msg = $session->error;
+    push_error($session, "$prefix: $err_msg") if $err_msg;
+    return;
+  }
 
   # mangle result table to get plain idx->value
   #---------------------------------------------------------------

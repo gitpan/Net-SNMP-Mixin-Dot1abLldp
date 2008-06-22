@@ -1,5 +1,11 @@
 Revision history for Net-SNMP-Mixin-Dot1abLldp
 
+0.10	Sun Jun 22 16:47:12 MEST 2008
+	changed get_request to get_entries for better dealing
+        with noSuchObject
+
+	used new util method push_error()
+
 0.09	Mo 16. Jun 14:53:31 CEST 2008
 	normalize lldpLocChassisId if lldpLocChassisIdSubtype is macAddress
 
