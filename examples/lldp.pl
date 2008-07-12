@@ -114,11 +114,14 @@ sub print_lldp {
   print '-' x 71, "\n";
 
   foreach my $lport ( sort { $a <=> $b } keys %$lldp_rem_tbl ) {
-    my $lldpRemPortId    = $lldp_rem_tbl->{$lport}{lldpRemPortId};
-    my $lldpRemSysName   = $lldp_rem_tbl->{$lport}{lldpRemSysName};
-    my $lldpRemChassisId = $lldp_rem_tbl->{$lport}{lldpRemChassisId};
-    printf "%3d %15.15s %25.25s %25.25s\n", $lport, $lldpRemSysName,
-      $lldpRemPortId, $lldpRemChassisId;
+    foreach my $idx ( sort { $a <=> $b } keys %{ $lldp_rem_tbl->{$lport} } )
+    {
+      my $lldpRemPortId    = $lldp_rem_tbl->{$lport}{$idx}{lldpRemPortId};
+      my $lldpRemSysName   = $lldp_rem_tbl->{$lport}{$idx}{lldpRemSysName};
+      my $lldpRemChassisId = $lldp_rem_tbl->{$lport}{$idx}{lldpRemChassisId};
+      printf "%3d %15.15s %25.25s %25.25s\n", $lport, $lldpRemSysName,
+        $lldpRemPortId, $lldpRemChassisId;
+    }
   }
 
 }

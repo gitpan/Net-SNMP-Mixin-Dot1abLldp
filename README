@@ -3,11 +3,11 @@ NAME
     Protocol
 
 VERSION
-    Version 0.10
+    Version 0.11
 
 SYNOPSIS
-    A mixin class for Net::SNMP for LLDP (Link Layer Discovery Protocol)
-    based info.
+    A Net::SNMP mixin class for LLDP (Link Layer Discovery Protocol) based
+    info.
 
       use Net::SNMP;
       use Net::SNMP::Mixin;
@@ -25,13 +25,16 @@ SYNOPSIS
       printf "Local ChassisID: %s\n",
         $session->get_lldp_local_system_data->{lldpLocChassisId};
 
-      my $lldp_rem_tbl = $session->get_lldp_rem_table;
+      $lldp_rem_tbl = $session->get_lldp_rem_table;
 
-      foreach my $lport ( sort { $a <=> $b } keys %{$lldp_rem_tbl} ) {
-        printf "%3d %15.15s %25.25s %25.25s\n", $lport,
-          $lldp_rem_tbl->{$lport}{lldpRemSysName},
-          $lldp_rem_tbl->{$lport}{lldpRemPortId},
-          $lldp_rem_tbl->{$lport}{lldpRemChassisId};
+      foreach $lport ( keys %$lldp_rem_tbl ) {
+        foreach $idx ( keys %{ $lldp_rem_tbl->{$lport} } ) {
+          $lldpRemPortId    = $lldp_rem_tbl->{$lport}{$idx}{lldpRemPortId};
+          $lldpRemSysName   = $lldp_rem_tbl->{$lport}{$idx}{lldpRemSysName};
+          $lldpRemChassisId = $lldp_rem_tbl->{$lport}{$idx}{lldpRemChassisId};
+
+          printf "$lport:$lldpRemSysName:$lldpRemPortId:$lldpRemChassisId\n";
+        }
       }
 
 DESCRIPTION
@@ -61,22 +64,23 @@ MIXIN METHODS
       }
 
   OBJ->get_lldp_rem_table()
-    Returns the LLDP lldp_rem_table as a hash reference. The keys are the
-    LLDP local port numbers on which the remote system information is
-    received:
+    Returns the LLDP lldp_rem_table as a hash reference. The table is
+    indexed by the LLDP local port numbers on which the remote system
+    information is received and an index for more multiple neighbors:
 
       {
-        INTEGER => {    # lldpRemLocalPortNum
-
-          lldpRemChassisIdSubtype => INTEGER,
-          lldpRemChassisId        => OCTET_STRING,
-          lldpRemPortIdSubtype    => INTEGER,
-          lldpRemPortId           => OCTET_STRING,
-          lldpRemPortDesc         => OCTET_STRING,
-          lldpRemSysName          => OCTET_STRING,
-          lldpRemSysDesc          => OCTET_STRING,
-          lldpRemSysCapSupported  => BITS,
-          lldpRemSysCapEnabled    => BITS,
+        lldpRemLocalPortNum => {
+          lldpRemIndex => {
+            lldpRemChassisIdSubtype => INTEGER,
+            lldpRemChassisId        => OCTET_STRING,
+            lldpRemPortIdSubtype    => INTEGER,
+            lldpRemPortId           => OCTET_STRING,
+            lldpRemPortDesc         => OCTET_STRING,
+            lldpRemSysName          => OCTET_STRING,
+            lldpRemSysDesc          => OCTET_STRING,
+            lldpRemSysCapSupported  => BITS,
+            lldpRemSysCapEnabled    => BITS,
+          }
         }
       }
 

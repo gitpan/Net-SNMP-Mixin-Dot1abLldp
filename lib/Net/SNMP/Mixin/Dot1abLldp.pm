@@ -67,15 +67,15 @@ Net::SNMP::Mixin::Dot1abLldp - mixin class for the Link Layer Discovery Protocol
 
 =head1 VERSION
 
-Version 0.10
+Version 0.11
 
 =cut
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =head1 SYNOPSIS
 
-A mixin class for Net::SNMP for LLDP (Link Layer Discovery Protocol) based info.
+A Net::SNMP mixin class for LLDP (Link Layer Discovery Protocol) based info.
 
   use Net::SNMP;
   use Net::SNMP::Mixin;
@@ -93,13 +93,16 @@ A mixin class for Net::SNMP for LLDP (Link Layer Discovery Protocol) based info.
   printf "Local ChassisID: %s\n",
     $session->get_lldp_local_system_data->{lldpLocChassisId};
 
-  my $lldp_rem_tbl = $session->get_lldp_rem_table;
+  $lldp_rem_tbl = $session->get_lldp_rem_table;
 
-  foreach my $lport ( sort { $a <=> $b } keys %{$lldp_rem_tbl} ) {
-    printf "%3d %15.15s %25.25s %25.25s\n", $lport,
-      $lldp_rem_tbl->{$lport}{lldpRemSysName},
-      $lldp_rem_tbl->{$lport}{lldpRemPortId},
-      $lldp_rem_tbl->{$lport}{lldpRemChassisId};
+  foreach $lport ( keys %$lldp_rem_tbl ) {
+    foreach $idx ( keys %{ $lldp_rem_tbl->{$lport} } ) {
+      $lldpRemPortId    = $lldp_rem_tbl->{$lport}{$idx}{lldpRemPortId};
+      $lldpRemSysName   = $lldp_rem_tbl->{$lport}{$idx}{lldpRemSysName};
+      $lldpRemChassisId = $lldp_rem_tbl->{$lport}{$idx}{lldpRemChassisId};
+
+      printf "$lport:$lldpRemSysName:$lldpRemPortId:$lldpRemChassisId\n";
+    }
   }
 
 =cut
@@ -147,20 +150,21 @@ sub get_lldp_local_system_data {
 
 =head2 B<< OBJ->get_lldp_rem_table() >>
 
-Returns the LLDP lldp_rem_table as a hash reference. The keys are the LLDP local port numbers on which the remote system information is received:
+Returns the LLDP lldp_rem_table as a hash reference. The table is indexed by the LLDP local port numbers on which the remote system information is received and an index for more multiple neighbors:
 
   {
-    INTEGER => {    # lldpRemLocalPortNum
-
-      lldpRemChassisIdSubtype => INTEGER,
-      lldpRemChassisId        => OCTET_STRING,
-      lldpRemPortIdSubtype    => INTEGER,
-      lldpRemPortId           => OCTET_STRING,
-      lldpRemPortDesc         => OCTET_STRING,
-      lldpRemSysName          => OCTET_STRING,
-      lldpRemSysDesc          => OCTET_STRING,
-      lldpRemSysCapSupported  => BITS,
-      lldpRemSysCapEnabled    => BITS,
+    lldpRemLocalPortNum => {
+      lldpRemIndex => {
+        lldpRemChassisIdSubtype => INTEGER,
+        lldpRemChassisId        => OCTET_STRING,
+        lldpRemPortIdSubtype    => INTEGER,
+        lldpRemPortId           => OCTET_STRING,
+        lldpRemPortDesc         => OCTET_STRING,
+        lldpRemSysName          => OCTET_STRING,
+        lldpRemSysDesc          => OCTET_STRING,
+        lldpRemSysCapSupported  => BITS,
+        lldpRemSysCapEnabled    => BITS,
+      }
     }
   }
 
@@ -197,21 +201,28 @@ sub get_lldp_rem_table {
 
   foreach my $row (@rows) {
 
+    # the rows are the concatenation of 'lldpRemLocalPortNum.lldpRemIndex'
+    # split them into separate values
+    my ( $lldpRemLocalPortNum, $lldpRemIndex ) = split /\./, $row;
+
     # loop over all columns
     foreach my $column ( keys %{ $session->{$prefix}{lldpRemTbl} } ) {
 
       # rebuild in reverse order: result(row,column) = stash(column,row)
       # side effect: make a shallow copy for shallow values
+      # side effect: entangle the row 'lldpRemLocalPortNum.lldpRemIndex'
 
-      $result->{$row}{$column} =
+      $result->{$lldpRemLocalPortNum}{$lldpRemIndex}{$column} =
         $session->{$prefix}{lldpRemTbl}{$column}{$row};
     }
 
     # if the chassisIdSubtype has the enumeration 'macAddress(4)'
     # we normalize the MacAddress
-    $result->{$row}{lldpRemChassisId} =
-      normalize_mac( $result->{$row}{lldpRemChassisId} )
-      if $result->{$row}{lldpRemChassisIdSubtype} == 4;
+    $result->{$lldpRemLocalPortNum}{$lldpRemIndex}{lldpRemChassisId} =
+      normalize_mac(
+      $result->{$lldpRemLocalPortNum}{$lldpRemIndex}{lldpRemChassisId} )
+      if $result->{$lldpRemLocalPortNum}{$lldpRemIndex}
+        {lldpRemChassisIdSubtype} == 4;
 
   }
 
@@ -265,8 +276,6 @@ sub _fetch_lldp_local_system_data {
     
   $result = $session->get_entries(
     -columns    => [ LLDP_LOCAL_SYSTEM_DATA, ],
-
-    -startindex => '1.0', # LLDP_LOCAL_CASSIS_ID_SUBTYPE
     -endindex   => '6.0', # LLDP_LOCAL_SYS_CAPA_ENA
 
     # define callback if in nonblocking mode
@@ -423,37 +432,36 @@ sub _lldp_rem_tbl_cb {
 
   # mangle result table to get plain idx->value
   # cut off the variable lldpRemTimeMark as pre
-  # and the lldpRemIndex as tail in the idx2val() call
   #
-  # result hashes: lldpRemLocalPortNum => values
+  # result hashes: lldpRemLocalPortNum.lldpRemIndex => values
   #
 
   $session->{$prefix}{lldpRemTbl}{lldpRemChassisIdSubtype} =
-    idx2val( $vbl, LLDP_REM_CASSIS_ID_SUBTYPE, 1, 1, );
+    idx2val( $vbl, LLDP_REM_CASSIS_ID_SUBTYPE, 1, undef, );
 
   $session->{$prefix}{lldpRemTbl}{lldpRemChassisId} =
-    idx2val( $vbl, LLDP_REM_CASSIS_ID, 1, 1, );
+    idx2val( $vbl, LLDP_REM_CASSIS_ID, 1, undef, );
 
   $session->{$prefix}{lldpRemTbl}{lldpRemPortIdSubtype} =
-    idx2val( $vbl, LLDP_REM_PORT_ID_SUBTYPE, 1, 1, );
+    idx2val( $vbl, LLDP_REM_PORT_ID_SUBTYPE, 1, undef, );
 
   $session->{$prefix}{lldpRemTbl}{lldpRemPortId} =
-    idx2val( $vbl, LLDP_REM_PORT_ID, 1, 1, );
+    idx2val( $vbl, LLDP_REM_PORT_ID, 1, undef, );
 
   $session->{$prefix}{lldpRemTbl}{lldpRemPortDesc} =
-    idx2val( $vbl, LLDP_REM_PORT_DESC, 1, 1, );
+    idx2val( $vbl, LLDP_REM_PORT_DESC, 1, undef, );
 
   $session->{$prefix}{lldpRemTbl}{lldpRemSysName} =
-    idx2val( $vbl, LLDP_REM_SYS_NAME, 1, 1, );
+    idx2val( $vbl, LLDP_REM_SYS_NAME, 1, undef, );
 
   $session->{$prefix}{lldpRemTbl}{lldpRemSysDesc} =
-    idx2val( $vbl, LLDP_REM_SYS_DESC, 1, 1, );
+    idx2val( $vbl, LLDP_REM_SYS_DESC, 1, undef, );
 
   $session->{$prefix}{lldpRemTbl}{lldpRemSysCapSupported} =
-    idx2val( $vbl, LLDP_REM_SYS_CAPA_SUP, 1, 1, );
+    idx2val( $vbl, LLDP_REM_SYS_CAPA_SUP, 1, undef, );
 
   $session->{$prefix}{lldpRemTbl}{lldpRemSysCapEnabled} =
-    idx2val( $vbl, LLDP_REM_SYS_CAPA_ENA, 1, 1, );
+    idx2val( $vbl, LLDP_REM_SYS_CAPA_ENA, 1, undef, );
 
   $session->{$prefix}{__initialized}++;
 }
