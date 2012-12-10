@@ -26,7 +26,7 @@ A script to get the LLDP information from switches supporting the MIBs.
 
   -d			Net::SNMP debug on
   -i			read agents from stdin, one agent per line
-  -B			nonblocking
+  -b			blocking
 
 =cut
 
@@ -37,12 +37,12 @@ use Net::SNMP::Mixin;
 use Getopt::Std;
 
 my %opts;
-getopts( 'iBdt:r:c:v:', \%opts ) or usage();
+getopts( 'ibdt:r:c:v:', \%opts ) or usage();
 
 my $debug       = $opts{d} || undef;
 my $community   = $opts{c} || 'public';
 my $version     = $opts{v} || '2';
-my $nonblocking = $opts{B} || 0;
+my $blocking = $opts{b};
 my $timeout     = $opts{t} || 5;
 my $retries     = $opts{t} || 0;
 
@@ -59,7 +59,7 @@ foreach my $agent ( sort @agents ) {
     -community   => $community,
     -hostname    => $agent,
     -version     => $version,
-    -nonblocking => $nonblocking,
+    -nonblocking => !$blocking,
     -timeout     => $timeout,
     -retries     => $retries,
     -debug       => $debug ? DEBUG_ALL : 0,
@@ -99,31 +99,36 @@ exit 0;
 ###################### end of main ######################
 
 sub print_lldp {
-  my $session = shift;
 
-  my $lldp_rem_tbl = $session->get_lldp_rem_table;
+  foreach my $session ( sort { $a->hostname cmp $b->hostname } @sessions ) {
+    my $lldp_loc_port_tbl = $session->get_lldp_loc_port_table;
+    my $lldp_rem_tbl      = $session->get_lldp_rem_table;
 
-  print "\n";
-  printf "Hostname: %-15.15s ChassisID: %-17.17s\n",
-    $session->hostname,
-    $session->get_lldp_local_system_data->{lldpLocChassisId};
+    print "\n";
+    printf "Hostname: %-15.15s ChassisID: %-17.17s\n",
+      $session->hostname,
+      $session->get_lldp_local_system_data->{lldpLocChassisId};
 
-  print '-' x 71, "\n";
-  printf "%5s %13s %25s %25s\n", 'LPort', 'RemSysName', 'RemPortId',
-    'RemChassisId';
-  print '-' x 71, "\n";
+    print '-' x 115, "\n";
 
-  foreach my $lport ( sort { $a <=> $b } keys %$lldp_rem_tbl ) {
-    foreach my $idx ( sort { $a <=> $b } keys %{ $lldp_rem_tbl->{$lport} } )
-    {
-      my $lldpRemPortId    = $lldp_rem_tbl->{$lport}{$idx}{lldpRemPortId};
-      my $lldpRemSysName   = $lldp_rem_tbl->{$lport}{$idx}{lldpRemSysName};
-      my $lldpRemChassisId = $lldp_rem_tbl->{$lport}{$idx}{lldpRemChassisId};
-      printf "%3d %15.15s %25.25s %25.25s\n", $lport, $lldpRemSysName,
-        $lldpRemPortId, $lldpRemChassisId;
+    printf "%5s %5s %25.25s %25.25s %25.25s %25s\n", 'LPort', 'LDesc', 'RemSysName',
+      'RemPortId', 'RemPortDesc', 'RemChassisId';
+
+    print '-' x 115, "\n";
+
+    foreach my $lport ( sort { $a <=> $b } keys %$lldp_rem_tbl ) {
+      foreach my $idx ( sort { $a <=> $b } keys %{ $lldp_rem_tbl->{$lport} } ) {
+        my $ldesc            = $lldp_loc_port_tbl->{$lport}{lldpLocPortDesc};
+        my $lldpRemPortId    = $lldp_rem_tbl->{$lport}{$idx}{lldpRemPortId};
+        my $lldpRemPortDesc  = $lldp_rem_tbl->{$lport}{$idx}{lldpRemPortDesc};
+        my $lldpRemSysName   = $lldp_rem_tbl->{$lport}{$idx}{lldpRemSysName};
+        my $lldpRemChassisId = $lldp_rem_tbl->{$lport}{$idx}{lldpRemChassisId};
+
+	printf "%5s %5s %25.25s %25.25s %25.25s %25s\n", $lport, $ldesc,
+          $lldpRemSysName, $lldpRemPortId, $lldpRemPortDesc, $lldpRemChassisId;
+      }
     }
   }
-
 }
 
 sub usage {
@@ -138,7 +143,7 @@ sub usage {
   	-r retries
   	-d		Net::SNMP debug on
 	-i		read agents from stdin
-  	-B		nonblocking
+  	-B		nonblocking, default
 EOT
 }
 
@@ -148,7 +153,7 @@ Karl Gaissmaier, karl.gaissmaier (at) uni-ulm.de
 
 =head1 COPYRIGHT
 
-Copyright (C) 2008 by Karl Gaissmaier
+Copyright (C) 2008-2012 by Karl Gaissmaier
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

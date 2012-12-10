@@ -1,25 +1,27 @@
 ---
-name: Net-SNMP-Mixin-Dot1abLldp
-version: 0.11
+abstract: 'mixin class for the Link Layer Discovery Protocol'
 author:
   - 'Karl Gaissmaier <karl.gaissmaier (at) uni-ulm.de>'
-abstract: mixin class for the Link Layer Discovery Protocol
+build_requires:
+  Module::Build: 0
+  Test::More: 0
+configure_requires:
+  Module::Build: 0
+generated_by: 'Module::Build version 0.3607'
 license: perl
-resources:
-  license: http://dev.perl.org/licenses/
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: Net-SNMP-Mixin-Dot1abLldp
+provides:
+  Net::SNMP::Mixin::Dot1abLldp:
+    file: lib/Net/SNMP/Mixin/Dot1abLldp.pm
+    version: 0.12
 requires:
   Net::SNMP: 0
   Net::SNMP::Mixin: 0.11
   Sub::Exporter: 0.978
-  perl: 5.6.0
-build_requires:
-  Module::Build: 0
-  Test::More: 0
-provides:
-  Net::SNMP::Mixin::Dot1abLldp:
-    file: lib/Net/SNMP/Mixin/Dot1abLldp.pm
-    version: 0.11
-generated_by: Module::Build version 0.2808
-meta-spec:
-  url: http://module-build.sourceforge.net/META-spec-v1.2.html
-  version: 1.2
+  perl: v5.6.0
+resources:
+  license: http://dev.perl.org/licenses/
+version: 0.12

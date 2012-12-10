@@ -14,7 +14,7 @@ plan skip_all =>
   "Net::SNMP::Mixin required for testing Net::SNMP::Mixin module"
   if $@;
 
-plan tests => 10;
+plan tests => 12;
 
 #plan 'no_plan';
 
@@ -27,7 +27,7 @@ my $snmp_community = $builder->notes('snmp_community');
 my $snmp_version   = $builder->notes('snmp_version');
 
 SKIP: {
-  skip '-> no live tests', 9, unless $snmp_agent;
+  skip '-> no live tests', 11, unless $snmp_agent;
 
   my ( $session, $error ) = Net::SNMP->session(
     hostname  => $snmp_agent,
@@ -40,6 +40,10 @@ SKIP: {
   ok(
     $session->can('get_lldp_local_system_data'),
     'can $session->get_lldp_local_system_data'
+  );
+  ok(
+    $session->can('get_lldp_loc_port_table'),
+    'can $session->get_lldp_loc_port_table'
   );
   ok( $session->can('get_lldp_rem_table'),
     'can $session->get_lldp_rem_table' );
@@ -60,6 +64,10 @@ SKIP: {
   my $lldp_local_system_data;
   eval { $lldp_local_system_data = $session->get_lldp_local_system_data };
   ok( !$@, 'get_lldp_local_system_data' );
+
+  my $lldp_loc_port_table;
+  eval { $lldp_loc_port_table = $session->get_lldp_loc_port_table };
+  ok( !$@, 'get_lldp_loc_port_table' );
 
   my $lldp_rem_table;
   eval { $lldp_rem_table = $session->get_lldp_rem_table };

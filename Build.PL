@@ -18,7 +18,7 @@ my $builder = Module::Build->new(
     'Module::Build' => '0',
     'Test::More'    => '0',
   },
-  create_makefile_pl => 'passthrough',
+  configure_requires => { 'Module::Build' => 0, },
   add_to_cleanup => [qw/Net-SNMP-Mixin-* Makefile* META.yml README/],
 );
 

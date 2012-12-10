@@ -25,6 +25,7 @@ BEGIN {
   @mixin_methods = (
     qw/
       get_lldp_local_system_data
+      get_lldp_loc_port_table
       get_lldp_rem_table
       /
   );
@@ -48,6 +49,12 @@ use constant {
   LLDP_LOCAL_SYS_CAPA_SUP      => '1.0.8802.1.1.2.1.3.5.0',
   LLDP_LOCAL_SYS_CAPA_ENA      => '1.0.8802.1.1.2.1.3.6.0',
 
+  LLDP_LOC_PORT_TABLE      => '1.0.8802.1.1.2.1.3.7',
+  LLDP_LOC_PORT_NUM        => '1.0.8802.1.1.2.1.3.7.1.1',
+  LLDP_LOC_PORT_ID_SUBTYPE => '1.0.8802.1.1.2.1.3.7.1.2',
+  LLDP_LOC_PORT_ID         => '1.0.8802.1.1.2.1.3.7.1.3',
+  LLDP_LOC_PORT_DESC       => '1.0.8802.1.1.2.1.3.7.1.4',
+
   LLDP_REM_TABLE             => '1.0.8802.1.1.2.1.4.1',
   LLDP_REM_LOCAL_PORT_NUM    => '1.0.8802.1.1.2.1.4.1.1.2',
   LLDP_REM_CASSIS_ID_SUBTYPE => '1.0.8802.1.1.2.1.4.1.1.4',
@@ -65,13 +72,9 @@ use constant {
 
 Net::SNMP::Mixin::Dot1abLldp - mixin class for the Link Layer Discovery Protocol
 
-=head1 VERSION
-
-Version 0.11
-
 =cut
 
-our $VERSION = '0.11';
+our $VERSION = '0.12';
 
 =head1 SYNOPSIS
 
@@ -93,15 +96,18 @@ A Net::SNMP mixin class for LLDP (Link Layer Discovery Protocol) based info.
   printf "Local ChassisID: %s\n",
     $session->get_lldp_local_system_data->{lldpLocChassisId};
 
-  $lldp_rem_tbl = $session->get_lldp_rem_table;
+  $lldp_loc_port_tbl = $session->get_lldp_loc_port_table;
+  $lldp_rem_tbl      = $session->get_lldp_rem_table;
 
   foreach $lport ( keys %$lldp_rem_tbl ) {
     foreach $idx ( keys %{ $lldp_rem_tbl->{$lport} } ) {
-      $lldpRemPortId    = $lldp_rem_tbl->{$lport}{$idx}{lldpRemPortId};
-      $lldpRemSysName   = $lldp_rem_tbl->{$lport}{$idx}{lldpRemSysName};
-      $lldpRemChassisId = $lldp_rem_tbl->{$lport}{$idx}{lldpRemChassisId};
+      my $lldpRemSysName   = $lldp_rem_tbl->{$lport}{$idx}{lldpRemSysName};
+      my $lldpRemPortId    = $lldp_rem_tbl->{$lport}{$idx}{lldpRemPortId};
+      my $lldpRemPortDesc  = $lldp_rem_tbl->{$lport}{$idx}{lldpRemPortDesc};
+      my $lldpRemChassisId = $lldp_rem_tbl->{$lport}{$idx}{lldpRemChassisId};
+      my $ldesc            = $lldp_loc_port_tbl->{$lport}{lldpLocPortDesc};
 
-      printf "$lport:$lldpRemSysName:$lldpRemPortId:$lldpRemChassisId\n";
+      printf "$lport:$ldesc => $lldpRemSysName:$lldpRemPortId:$lldpRemPortDesc:$lldpRemChassisId\n";
     }
   }
 
@@ -113,7 +119,7 @@ With this mixin it's simple to explore the Layer-2 topologie of the network.
 
 The LLDP (Link Layer Discovery Protocol) is an IEEE (Draft?) standard for vendor-independent Layer-2 discovery, similar to the proprietary CDP (Cisco Discovery Protocol) from Cisco. It's defined in the IEEE 802.1AB documents, therefore the name of this module.
 
-This mixin reads data from the B<< lldpLocalSystemData >> and the B<< lldpRemTable >> out of the LLDP-MIB. At least these values are in the mandatory set of the LLDP-MIB.
+This mixin reads data from the B<< lldpLocalSystemData >>, B<< lldpLocPortTable >>  and the B<< lldpRemTable >> out of the LLDP-MIB. At least these values are in the mandatory set of the LLDP-MIB.
 
 =head1 MIXIN METHODS
 
@@ -148,24 +154,16 @@ sub get_lldp_local_system_data {
   return $result;
 }
 
-=head2 B<< OBJ->get_lldp_rem_table() >>
+=head2 B<< OBJ->get_lldp_loc_port_table() >>
 
-Returns the LLDP lldp_rem_table as a hash reference. The table is indexed by the LLDP local port numbers on which the remote system information is received and an index for more multiple neighbors:
+Returns the LLDP lldp_loc_port_table as a hash reference. The table is indexed by the LLDP local port numbers:
 
   {
-    lldpRemLocalPortNum => {
-      lldpRemIndex => {
-        lldpRemChassisIdSubtype => INTEGER,
-        lldpRemChassisId        => OCTET_STRING,
-        lldpRemPortIdSubtype    => INTEGER,
-        lldpRemPortId           => OCTET_STRING,
-        lldpRemPortDesc         => OCTET_STRING,
-        lldpRemSysName          => OCTET_STRING,
-        lldpRemSysDesc          => OCTET_STRING,
-        lldpRemSysCapSupported  => BITS,
-        lldpRemSysCapEnabled    => BITS,
-      }
-    }
+     lldpLocPortNum => {
+	lldpLocPortIdSubtype => INTEGER,
+	lldpLocPortId        => OCTET_STRING,
+	lldpLocPortDesc      => OCTET_STRING,
+     }
   }
 
 The LLDP portnumber isn't necessarily the ifIndex of the switch. See the TEXTUAL-CONVENTION from the LLDP-MIB:
@@ -184,6 +182,60 @@ See also the L<< Net::SNMP::Mixin::Dot1dBase >> for a mixin to get the mapping b
 
 =cut
 
+
+sub get_lldp_loc_port_table {
+  my $session = shift;
+  Carp::croak "'$prefix' not initialized,"
+    unless $session->{$prefix}{__initialized};
+
+  # stash for return values
+  my $result = {};
+
+  #
+  # the MIB tables are stored in {column}{row}{value} order
+  # but we return {row}{column}{value}
+  #
+  # grab all rows from one choosen column
+  my @rows = keys %{ $session->{$prefix}{lldpLocPortTbl}{lldpLocPortId} };
+
+  foreach my $row (@rows) {
+
+    # loop over all columns
+    foreach my $column ( keys %{ $session->{$prefix}{lldpLocPortTbl} } ) {
+
+      # rebuild in reverse order: result(row,column) = stash(column,row)
+      # side effect: make a shallow copy for shallow values
+
+      $result->{$row}{$column} =
+        $session->{$prefix}{lldpLocPortTbl}{$column}{$row};
+    }
+
+  }
+
+  return $result;
+}
+
+=head2 B<< OBJ->get_lldp_rem_table() >>
+
+Returns the LLDP lldp_rem_table as a hash reference. The table is indexed by the LLDP local port numbers on which the remote system information is received and an index for multiple neighbors on one port:
+
+  {
+    lldpRemLocalPortNum => {
+      lldpRemIndex => {
+        lldpRemChassisIdSubtype => INTEGER,
+        lldpRemChassisId        => OCTET_STRING,
+        lldpRemPortIdSubtype    => INTEGER,
+        lldpRemPortId           => OCTET_STRING,
+        lldpRemPortDesc         => OCTET_STRING,
+        lldpRemSysName          => OCTET_STRING,
+        lldpRemSysDesc          => OCTET_STRING,
+        lldpRemSysCapSupported  => BITS,
+        lldpRemSysCapEnabled    => BITS,
+      }
+    }
+  }
+
+=cut
 
 sub get_lldp_rem_table {
   my $session = shift;
@@ -247,6 +299,9 @@ sub _init {
   #
   # initialize the object for LLDP infos
   _fetch_lldp_local_system_data($session);
+  return if $session->error;
+
+  _fetch_lldp_loc_port_tbl($session);
   return if $session->error;
 
   _fetch_lldp_rem_tbl($session);
@@ -336,6 +391,79 @@ sub _lldp_local_system_data_cb {
 
   $session->{$prefix}{locSysData}{lldpLocSysCapEnabled} =
     $vbl->{ LLDP_LOCAL_SYS_CAPA_ENA() };
+
+  $session->{$prefix}{__initialized}++;
+}
+
+=head2 B<< _fetch_lldp_loc_port_tbl($session) >>
+
+Fetch the lldpLocPortTable once during object initialization.
+
+=cut
+
+sub _fetch_lldp_loc_port_tbl {
+  my $session = shift;
+  my $result;
+
+  # fetch the lldpLocPortTable
+  $result = $session->get_table(
+    -baseoid => LLDP_LOC_PORT_TABLE,
+
+    # define callback if in nonblocking mode
+    $session->nonblocking
+    ? ( -callback => \&_lldp_loc_port_tbl_cb )
+    : (),
+
+    # dangerous for snmp version 2c and 3,
+    # some agents are very buggy, like ExtremeNetworks Ver. 7.7.1
+    $session->version ? ( -maxrepetitions => 0 ) : (),
+  );
+
+  unless (defined $result) {
+    # Net::SNMP looses sometimes error messages in nonblocking
+    # mode, so we save them in an extra buffer
+    my $err_msg = $session->error;
+    push_error($session, "$prefix: $err_msg") if $err_msg;
+    return;
+  }
+
+  # in nonblocking mode the callback will be called asynchronously
+  return 1 if $session->nonblocking;
+
+  # ok we are in synchronous mode, call the result mangling function
+  # by hand
+  _lldp_loc_port_tbl_cb($session);
+
+}
+
+=head2 B<< _lldp_loc_port_tbl_cb($session) >>
+
+The callback for _fetch_lldp_loc_port_tbl_cb().
+
+=cut
+
+sub _lldp_loc_port_tbl_cb {
+  my $session = shift;
+  my $vbl     = $session->var_bind_list;
+
+  unless (defined $vbl) {
+    # Net::SNMP looses sometimes error messages in nonblocking
+    # mode, so we save them in an extra buffer
+    my $err_msg = $session->error;
+    push_error($session, "$prefix: $err_msg") if $err_msg;
+    return;
+  }
+
+  # mangle result table to get plain idx->value
+
+  $session->{$prefix}{lldpLocPortTbl}{lldpLocPortIdSubtype} =
+    idx2val( $vbl, LLDP_LOC_PORT_ID_SUBTYPE );
+
+  $session->{$prefix}{lldpLocPortTbl}{lldpLocPortId} =
+    idx2val( $vbl, LLDP_LOC_PORT_ID );
+
+  $session->{$prefix}{lldpLocPortTbl}{lldpLocPortDesc} =
+    idx2val( $vbl, LLDP_LOC_PORT_DESC );
 
   $session->{$prefix}{__initialized}++;
 }
@@ -493,7 +621,7 @@ Karl Gaissmaier <karl.gaissmaier at uni-ulm.de>
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2008 Karl Gaissmaier, all rights reserved.
+Copyright 2008-2012 Karl Gaissmaier, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

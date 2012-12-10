@@ -14,7 +14,7 @@ plan skip_all =>
   "Net::SNMP::Mixin required for testing Net::SNMP::Mixin module"
   if $@;
 
-plan tests => 36;
+plan tests => 35;
 #plan 'no_plan';
 
 my $builder        = Module::Build->current;
@@ -23,7 +23,7 @@ my $snmp_community = $builder->notes('snmp_community');
 my $snmp_version   = $builder->notes('snmp_version');
 
 SKIP: {
-  skip '-> no live tests', 36, unless $snmp_agent;
+  skip '-> no live tests', 35, unless $snmp_agent;
 
   my ( $session, $error ) = Net::SNMP->session(
     hostname  => $snmp_agent,
@@ -38,6 +38,10 @@ SKIP: {
   ok(
     $session->can('get_lldp_local_system_data'),
     'can $session->get_lldp_local_system_data'
+  );
+  ok(
+    $session->can('get_lldp_loc_port_table'),
+    'can $session->get_lldp_loc_port_table'
   );
   ok( $session->can('get_lldp_rem_table'),
     'can $session->get_lldp_rem_table' );
@@ -63,10 +67,13 @@ SKIP: {
     'pure instance method called as class method'
   );
 
-  my ($lldp_local_system_data, $lldp_rem_table);
+  my ($lldp_local_system_data, $lldp_loc_port_table, $lldp_rem_table);
 
   eval { $lldp_local_system_data = $session->get_lldp_local_system_data };
   ok( !$@, 'get_lldp_local_system_data' );
+
+  eval { $lldp_loc_port_table = $session->get_lldp_loc_port_table };
+  ok( !$@, 'get_lldp_loc_port_table' );
 
   eval { $lldp_rem_table = $session->get_lldp_rem_table };
   ok( !$@, 'get_lldp_rem_table' );
@@ -85,12 +92,6 @@ SKIP: {
   isa_ok( $session, 'Net::SNMP' );
 
   isa_ok( $session->mixer('Net::SNMP::Mixin::Dot1abLldp'), 'Net::SNMP' );
-  ok(
-    $session->can('get_lldp_local_system_data'),
-    'can $session->get_lldp_local_system_data'
-  );
-  ok( $session->can('get_lldp_rem_table'),
-    'can $session->get_lldp_rem_table' );
 
   eval { $session->init_mixins };
   snmp_dispatcher();
@@ -102,6 +103,9 @@ SKIP: {
 
   eval { $lldp_local_system_data = $session->get_lldp_local_system_data };
   ok( !$@, 'get_lldp_local_system_data' );
+
+  eval { $lldp_loc_port_table = $session->get_lldp_loc_port_table };
+  ok( !$@, 'get_lldp_loc_port_table' );
 
   eval { $lldp_rem_table = $session->get_lldp_rem_table };
   ok( !$@, 'get_lldp_rem_table' );
@@ -121,12 +125,6 @@ SKIP: {
   isa_ok( $session, 'Net::SNMP' );
 
   isa_ok( $session->mixer('Net::SNMP::Mixin::Dot1abLldp'), 'Net::SNMP' );
-  ok(
-    $session->can('get_lldp_local_system_data'),
-    'can $session->get_lldp_local_system_data'
-  );
-  ok( $session->can('get_lldp_rem_table'),
-    'can $session->get_lldp_rem_table' );
 
   eval { $session->init_mixins };
   like(
@@ -136,6 +134,9 @@ SKIP: {
   );
 
   eval { $lldp_local_system_data = $session->get_lldp_local_system_data };
+  like( $@, qr/not initialized/, 'not initialized' );
+
+  eval { $lldp_loc_port_table = $session->get_lldp_loc_port_table };
   like( $@, qr/not initialized/, 'not initialized' );
 
   eval { $lldp_rem_table = $session->get_lldp_rem_table };
@@ -157,13 +158,6 @@ SKIP: {
   isa_ok( $session, 'Net::SNMP' );
 
   isa_ok( $session->mixer('Net::SNMP::Mixin::Dot1abLldp'), 'Net::SNMP' );
-  ok(
-    $session->can('get_lldp_local_system_data'),
-    'can $session->get_lldp_local_system_data'
-  );
-  ok( $session->can('get_lldp_rem_table'),
-    'can $session->get_lldp_rem_table' );
-
 
   eval { $session->init_mixins };
   snmp_dispatcher();
@@ -174,6 +168,9 @@ SKIP: {
   );
 
   eval { $lldp_local_system_data = $session->get_lldp_local_system_data };
+  like( $@, qr/not initialized/, 'not initialized' );
+
+  eval { $lldp_loc_port_table = $session->get_lldp_loc_port_table };
   like( $@, qr/not initialized/, 'not initialized' );
 
   eval { $lldp_rem_table = $session->get_lldp_rem_table };
